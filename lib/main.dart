@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:animate_do/animate_do.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'services/ai_service.dart';
+import 'package:intl/intl.dart';
 
 void main() {
   runApp(const MyApp());
@@ -62,7 +67,44 @@ class MyApp extends StatelessWidget {
           secondary: const Color(0xFF1C1C1C),
         ),
         useMaterial3: true,
-        fontFamily: 'Roboto',
+        textTheme: GoogleFonts.poppinsTextTheme().copyWith(
+          displayLarge: GoogleFonts.playfairDisplay(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+          ),
+          displayMedium: GoogleFonts.playfairDisplay(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+          ),
+          headlineMedium: GoogleFonts.poppins(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+          ),
+          titleLarge: GoogleFonts.poppins(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+          bodyLarge: GoogleFonts.poppins(
+            fontSize: 16,
+          ),
+          bodyMedium: GoogleFonts.poppins(
+            fontSize: 14,
+          ),
+        ),
+        cardTheme: CardTheme(
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
       ),
       home: const HomePage(),
     );
@@ -78,6 +120,10 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
+  final TextEditingController _promptController = TextEditingController();
+  final AiService _aiService = AiService();
+  String? _aiResponse;
+  bool _isLoading = false;
 
   final List<Widget> _screens = [
     const DonateScreen(),
@@ -87,9 +133,120 @@ class _HomePageState extends State<HomePage> {
   ];
 
   @override
+  void dispose() {
+    _promptController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _getAiResponse() async {
+    if (_promptController.text.trim().isEmpty) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final response = await _aiService.getResponse(_promptController.text);
+
+    setState(() {
+      _aiResponse = response;
+      _isLoading = false;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: _screens[_selectedIndex],
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Show AI assistant dialog
+          showModalBottomSheet(
+            isScrollControlled: true,
+            context: context,
+            builder: (context) => StatefulBuilder(
+              builder: (context, setState) => Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            child: const Icon(
+                              Icons.restaurant_menu,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Food Assistant',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      const Text('How can I help you with food donations today?'),
+                      const SizedBox(height: 16),
+                      if (_aiResponse != null) ...[
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(_aiResponse!),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      TextField(
+                        controller: _promptController,
+                        decoration: const InputDecoration(
+                          hintText: 'Ask me about donations, food, or assistance...',
+                          border: OutlineInputBorder(),
+                        ),
+                        maxLines: 3,
+                        minLines: 1,
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : () async {
+                            await _getAiResponse();
+                            setState(() {}); // Update the bottom sheet UI
+                          },
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text('Send'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        child: const Icon(
+          Icons.restaurant_menu,
+          color: Colors.white,
+        ),
+      ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Theme.of(context).colorScheme.primary,
@@ -137,7 +294,6 @@ class DonateScreen extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.notifications),
               onPressed: () {
-                // Show notifications
                 showModalBottomSheet(
                   context: context,
                   builder: (context) => const NotificationsSheet(),
@@ -150,22 +306,64 @@ class DonateScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
-              SearchBar(
-                hintText: 'Search for donation centers...',
-                leading: const Icon(Icons.search),
-                onTap: () {
-                  // Implement search functionality
-                },
+              // Emergency Food Request Banner
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.error.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.error,
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.priority_high,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Urgent Food Requests',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      '3 families nearby need immediate food assistance',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: () {
+                        // Navigate to urgent requests
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.error,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Help Now'),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               const Text(
-                'Make a Difference',
+                'Quick Actions',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               GridView.count(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -175,8 +373,8 @@ class DonateScreen extends StatelessWidget {
                 children: [
                   DonationCard(
                     icon: Icons.restaurant,
-                    title: 'Donate Food',
-                    subtitle: 'Share your excess food',
+                    title: 'Share Food',
+                    subtitle: 'Donate cooked or packaged food',
                     onTap: () {
                       Navigator.push(
                         context,
@@ -185,37 +383,30 @@ class DonateScreen extends StatelessWidget {
                         ),
                       );
                     },
-                  ),
-                  DonationCard(
-                    icon: Icons.attach_money,
-                    title: 'Fund a Meal',
-                    subtitle: 'Sponsor meals',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const FundingScreen(),
-                        ),
-                      );
-                    },
+                    index: 0,
                   ),
                   DonationCard(
                     icon: Icons.delivery_dining,
-                    title: 'Volunteer',
-                    subtitle: 'Help in distribution',
+                    title: 'Pickup Request',
+                    subtitle: 'Request food pickup from your location',
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const VolunteerScreen(),
-                        ),
-                      );
+                      // Implement pickup request
                     },
+                    index: 1,
+                  ),
+                  DonationCard(
+                    icon: Icons.groups,
+                    title: 'Community Kitchen',
+                    subtitle: 'Cook for the community',
+                    onTap: () {
+                      // Navigate to community kitchen screen
+                    },
+                    index: 2,
                   ),
                   DonationCard(
                     icon: Icons.store,
-                    title: 'Partner',
-                    subtitle: 'Register as NGO',
+                    title: 'Restaurant Partner',
+                    subtitle: 'Register restaurant/store',
                     onTap: () {
                       Navigator.push(
                         context,
@@ -224,16 +415,28 @@ class DonateScreen extends StatelessWidget {
                         ),
                       );
                     },
+                    index: 3,
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-              const Text(
-                'Recent Donations',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Available Food',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      // View all donations
+                    },
+                    child: const Text('View All'),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               ListView.builder(
@@ -244,9 +447,9 @@ class DonateScreen extends StatelessWidget {
                   return DonationListItem(
                     package: FoodPackage(
                       id: 'id_$index',
-                      title: 'Food Package ${index + 1}',
-                      description: 'Fresh meals available',
-                      donor: 'Restaurant ${index + 1}',
+                      title: 'Fresh Meals',
+                      description: 'Freshly cooked meals available for immediate pickup',
+                      donor: 'Community Kitchen ${index + 1}',
                       location: '${2 + index} km away',
                       servings: 10 + index,
                       expiryTime: DateTime.now().add(const Duration(hours: 4)),
@@ -255,7 +458,83 @@ class DonateScreen extends StatelessWidget {
                   );
                 },
               ),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Impact Stats',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildImpactStat(
+                          context,
+                          '1.2K',
+                          'Meals Shared',
+                          Icons.restaurant,
+                        ),
+                        _buildImpactStat(
+                          context,
+                          '320',
+                          'Families Helped',
+                          Icons.people,
+                        ),
+                        _buildImpactStat(
+                          context,
+                          '45',
+                          'Active Donors',
+                          Icons.volunteer_activism,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ]),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImpactStat(
+    BuildContext context,
+    String value,
+    String label,
+    IconData icon,
+  ) {
+    return Column(
+      children: [
+        Icon(
+          icon,
+          color: Theme.of(context).colorScheme.primary,
+          size: 32,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: Colors.grey,
           ),
         ),
       ],
@@ -268,6 +547,7 @@ class DonationCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final int index;
 
   const DonationCard({
     super.key,
@@ -275,45 +555,47 @@ class DonationCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
+    required this.index,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 40,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+    return FadeInUp(
+      delay: Duration(milliseconds: 100 * index),
+      child: Card(
+        elevation: 2,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 40,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
+                const SizedBox(height: 12),
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
-                textAlign: TextAlign.center,
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
         ),
-      ),
+      ).animate()
+        .fadeIn(duration: const Duration(milliseconds: 500))
+        .scale(delay: Duration(milliseconds: 100 * index)),
     );
   }
 }
@@ -433,7 +715,7 @@ class FoodRequestCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+            Text(
                   package.title,
                   style: const TextStyle(
                     fontSize: 18,
@@ -690,7 +972,7 @@ class ProfileHeader extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         const Text(
-          'John Doe',
+          'Sita Rama',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -778,15 +1060,209 @@ class DonationHistoryItem extends StatelessWidget {
 }
 
 // Additional Screens
-class DonateFormScreen extends StatelessWidget {
+class DonateFormScreen extends StatefulWidget {
   const DonateFormScreen({super.key});
+
+  @override
+  State<DonateFormScreen> createState() => _DonateFormScreenState();
+}
+
+class _DonateFormScreenState extends State<DonateFormScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _servingsController = TextEditingController();
+  final _locationController = TextEditingController();
+  DateTime _expiryTime = DateTime.now().add(const Duration(hours: 4));
+  bool _canProvideDelivery = false;
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _servingsController.dispose();
+    _locationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Donate Food')),
-      body: const Center(child: Text('Donate Form')),
+      appBar: AppBar(
+        title: const Text('Share Food'),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              FadeInDown(
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Food Safety Guidelines',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '• Ensure food is properly packaged\n• Include expiry date\n• Maintain proper temperature\n• List all ingredients',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              FadeInLeft(
+                delay: const Duration(milliseconds: 200),
+                child: TextFormField(
+                  controller: _titleController,
+                  decoration: const InputDecoration(
+                    labelText: 'Food Title',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a title';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              FadeInLeft(
+                delay: const Duration(milliseconds: 300),
+                child: TextFormField(
+                  controller: _descriptionController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Description',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a description';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              FadeInLeft(
+                delay: const Duration(milliseconds: 400),
+                child: TextFormField(
+                  controller: _servingsController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Number of Servings',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter number of servings';
+                    }
+                    if (int.tryParse(value) == null) {
+                      return 'Please enter a valid number';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              FadeInLeft(
+                delay: const Duration(milliseconds: 500),
+                child: TextFormField(
+                  controller: _locationController,
+                  decoration: const InputDecoration(
+                    labelText: 'Pickup Location',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter pickup location';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              FadeInRight(
+                delay: const Duration(milliseconds: 600),
+                child: ListTile(
+                  title: const Text('Best Before Time'),
+                  subtitle: Text(
+                    DateFormat('MMM dd, yyyy HH:mm').format(_expiryTime),
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.access_time),
+                    onPressed: () async {
+                      final TimeOfDay? time = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay.fromDateTime(_expiryTime),
+                      );
+                      if (time != null) {
+                        setState(() {
+                          _expiryTime = DateTime(
+                            _expiryTime.year,
+                            _expiryTime.month,
+                            _expiryTime.day,
+                            time.hour,
+                            time.minute,
+                          );
+                        });
+                      }
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              FadeInRight(
+                delay: const Duration(milliseconds: 700),
+                child: SwitchListTile(
+                  title: const Text('Can Provide Delivery'),
+                  value: _canProvideDelivery,
+                  onChanged: (bool value) {
+                    setState(() {
+                      _canProvideDelivery = value;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(height: 24),
+              FadeInUp(
+                delay: const Duration(milliseconds: 800),
+                child: ElevatedButton(
+                  onPressed: _submitForm,
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16.0),
+                    child: Text('Submit Donation'),
+                  ),
+                ).animate(
+                  target: _canProvideDelivery ? 1.0 : 0.0,
+                ).scale(begin: const Offset(1, 1), end: const Offset(1.02, 1.02)),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
+  }
+
+  void _submitForm() {
+    if (_formKey.currentState!.validate()) {
+      // TODO: Implement form submission
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Thank you for sharing food!')),
+      );
+      Navigator.pop(context);
+    }
   }
 }
 
