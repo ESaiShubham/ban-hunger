@@ -109,8 +109,14 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.food_bank),
             label: 'Request',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Community'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.people),
+            label: 'Community',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
         ],
       ),
     );
@@ -126,7 +132,7 @@ class DonateScreen extends StatelessWidget {
       slivers: [
         SliverAppBar(
           floating: true,
-          title: const Text('FoodShare'),
+          title: const Text('Ban Hunger'),
           actions: [
             IconButton(
               icon: const Icon(Icons.notifications),
@@ -154,7 +160,10 @@ class DonateScreen extends StatelessWidget {
               const SizedBox(height: 20),
               const Text(
                 'Make a Difference',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 20),
               GridView.count(
@@ -221,7 +230,10 @@ class DonateScreen extends StatelessWidget {
               const SizedBox(height: 20),
               const Text(
                 'Recent Donations',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 16),
               ListView.builder(
@@ -292,7 +304,10 @@ class DonationCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 subtitle,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -306,7 +321,10 @@ class DonationCard extends StatelessWidget {
 class DonationListItem extends StatelessWidget {
   final FoodPackage package;
 
-  const DonationListItem({super.key, required this.package});
+  const DonationListItem({
+    super.key,
+    required this.package,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -318,9 +336,7 @@ class DonationListItem extends StatelessWidget {
           child: Icon(Icons.restaurant, color: Colors.white),
         ),
         title: Text(package.title),
-        subtitle: Text(
-          '${package.location} • ${package.servings} meals available',
-        ),
+        subtitle: Text('${package.location} • ${package.servings} meals available'),
         trailing: ElevatedButton(
           onPressed: () {
             showModalBottomSheet(
@@ -342,14 +358,20 @@ class RequestScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomScrollView(
       slivers: [
-        const SliverAppBar(floating: true, title: Text('Request Food')),
+        const SliverAppBar(
+          floating: true,
+          title: Text('Request Food'),
+        ),
         SliverPadding(
           padding: const EdgeInsets.all(16.0),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
               const Text(
                 'Available Food Packages',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 20),
               ListView.builder(
@@ -382,7 +404,10 @@ class RequestScreen extends StatelessWidget {
 class FoodRequestCard extends StatelessWidget {
   final FoodPackage package;
 
-  const FoodRequestCard({super.key, required this.package});
+  const FoodRequestCard({
+    super.key,
+    required this.package,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -396,7 +421,11 @@ class FoodRequestCard extends StatelessWidget {
             width: double.infinity,
             color: Colors.grey[300],
             child: Center(
-              child: Icon(Icons.restaurant, size: 50, color: Colors.grey[600]),
+              child: Icon(
+                Icons.restaurant,
+                size: 50,
+                color: Colors.grey[600],
+              ),
             ),
           ),
           Padding(
@@ -416,8 +445,7 @@ class FoodRequestCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Icon(
-                      Icons.location_on,
+                    Icon(Icons.location_on,
                       color: Theme.of(context).colorScheme.primary,
                       size: 16,
                     ),
@@ -440,9 +468,9 @@ class FoodRequestCard extends StatelessWidget {
                     onPressed: () {
                       showModalBottomSheet(
                         context: context,
-                        builder:
-                            (context) =>
-                                RequestConfirmationSheet(package: package),
+                        builder: (context) => RequestConfirmationSheet(
+                          package: package,
+                        ),
                       );
                     },
                     child: const Text('Request Now'),
@@ -495,11 +523,8 @@ class CommunityScreen extends StatelessWidget {
                       id: 'post_$index',
                       userName: 'User ${index + 1}',
                       userAvatar: 'https://example.com/avatar$index.jpg',
-                      content:
-                          'Donated ${10 + index} meals today! Feeling grateful to be able to help those in need. #FoodShare #Community',
-                      timestamp: DateTime.now().subtract(
-                        Duration(hours: index),
-                      ),
+                      content: 'Donated ${10 + index} meals today! Feeling grateful to be able to help those in need. #FoodShare #Community',
+                      timestamp: DateTime.now().subtract(Duration(hours: index)),
                       likes: 10 + index,
                       images: ['https://example.com/post$index.jpg'],
                     ),
@@ -517,7 +542,10 @@ class CommunityScreen extends StatelessWidget {
 class CommunityPostCard extends StatelessWidget {
   final CommunityPost post;
 
-  const CommunityPostCard({super.key, required this.post});
+  const CommunityPostCard({
+    super.key,
+    required this.post,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -551,7 +579,11 @@ class CommunityPostCard extends StatelessWidget {
               width: double.infinity,
               color: Colors.grey[300],
               child: Center(
-                child: Icon(Icons.image, size: 50, color: Colors.grey[600]),
+                child: Icon(
+                  Icons.image,
+                  size: 50,
+                  color: Colors.grey[600],
+                ),
               ),
             ),
           Padding(
@@ -590,7 +622,12 @@ class ProfileScreen extends StatelessWidget {
         const SliverAppBar(
           floating: true,
           title: Text('Profile'),
-          actions: [IconButton(icon: Icon(Icons.settings), onPressed: null)],
+          actions: [
+            IconButton(
+              icon: Icon(Icons.settings),
+              onPressed: null,
+            ),
+          ],
         ),
         SliverPadding(
           padding: const EdgeInsets.all(16.0),
@@ -602,7 +639,10 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 24),
               const Text(
                 'My Donations',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 16),
               ListView.builder(
@@ -618,9 +658,7 @@ class ProfileScreen extends StatelessWidget {
                       donor: 'You',
                       location: 'Local Food Bank',
                       servings: 15 + index,
-                      expiryTime: DateTime.now().subtract(
-                        Duration(days: index),
-                      ),
+                      expiryTime: DateTime.now().subtract(Duration(days: index)),
                       imageUrl: 'https://example.com/history$index.jpg',
                     ),
                   );
@@ -644,20 +682,32 @@ class ProfileHeader extends StatelessWidget {
         const CircleAvatar(
           radius: 50,
           backgroundColor: Color(0xFFE23744),
-          child: Icon(Icons.person, size: 50, color: Colors.white),
+          child: Icon(
+            Icons.person,
+            size: 50,
+            color: Colors.white,
+          ),
         ),
         const SizedBox(height: 16),
         const Text(
           'John Doe',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
           'Active Member since Jan 2024',
-          style: TextStyle(color: Colors.grey[600]),
+          style: TextStyle(
+            color: Colors.grey[600],
+          ),
         ),
         const SizedBox(height: 16),
-        ElevatedButton(onPressed: () {}, child: const Text('Edit Profile')),
+        ElevatedButton(
+          onPressed: () {},
+          child: const Text('Edit Profile'),
+        ),
       ],
     );
   }
@@ -683,9 +733,17 @@ class ProfileStats extends StatelessWidget {
       children: [
         Text(
           value,
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        Text(label, style: const TextStyle(color: Colors.grey)),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.grey,
+          ),
+        ),
       ],
     );
   }
@@ -694,7 +752,10 @@ class ProfileStats extends StatelessWidget {
 class DonationHistoryItem extends StatelessWidget {
   final FoodPackage package;
 
-  const DonationHistoryItem({super.key, required this.package});
+  const DonationHistoryItem({
+    super.key,
+    required this.package,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -789,7 +850,10 @@ class NotificationsSheet extends StatelessWidget {
         children: [
           Text(
             'Notifications',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           SizedBox(height: 16),
           Center(child: Text('No new notifications')),
@@ -802,7 +866,10 @@ class NotificationsSheet extends StatelessWidget {
 class DonationDetailsSheet extends StatelessWidget {
   final FoodPackage package;
 
-  const DonationDetailsSheet({super.key, required this.package});
+  const DonationDetailsSheet({
+    super.key,
+    required this.package,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -814,7 +881,10 @@ class DonationDetailsSheet extends StatelessWidget {
         children: [
           Text(
             package.title,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
           Text(package.description),
@@ -850,7 +920,10 @@ class DonationDetailsSheet extends StatelessWidget {
 class RequestConfirmationSheet extends StatelessWidget {
   final FoodPackage package;
 
-  const RequestConfirmationSheet({super.key, required this.package});
+  const RequestConfirmationSheet({
+    super.key,
+    required this.package,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -862,7 +935,10 @@ class RequestConfirmationSheet extends StatelessWidget {
         children: [
           Text(
             'Request ${package.title}',
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 16),
           Text('Location: ${package.location}'),
@@ -875,7 +951,9 @@ class RequestConfirmationSheet extends StatelessWidget {
                 Navigator.pop(context);
                 // Implement request logic
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Request sent successfully!')),
+                  const SnackBar(
+                    content: Text('Request sent successfully!'),
+                  ),
                 );
               },
               child: const Text('Confirm Request'),
